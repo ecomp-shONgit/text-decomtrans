@@ -1,2 +1,2 @@
 # text-decomtrans
-text-decomposition  text-transformation string-trsnformation string-decomposition polytonic-greek
+text (latin & polytonic  greek) 2 syllables, n-grams, n-grams panned, letter selections, head-body-tail, letter transforms
