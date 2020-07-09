@@ -7,3 +7,5 @@ The software is the second of a triad of software, that is needed to perform var
 2. Decomposition: split string into syllables, n-grams, n-grams panned, letter-selections, head-body-tail,
 
 3. Transformation: letter transforms, word-selections, stop word masking, vectors/co-occurrence representations
+
+4. Schallow neighbourhood Representation 
