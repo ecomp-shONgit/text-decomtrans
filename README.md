@@ -8,4 +8,35 @@ The software is the second of a triad of software, that is needed to perform var
 
 3. Transformation: letter transforms, word-selections, stop word masking, vectors/co-occurrence representations
 
-4. Schallow neighbourhood Representation 
+4. Shallow neighbourhood representation 
+
+# EXAMPLES
+To get a notion of what the software is good for an how to use it visit this page:
+
+http://ecomparatio.net/~khk/NORM-DECOMP-DIST/zerl.html
+
+# Functions
+
+- ngramWhole: ngram for entire string
+
+- ngramWords: wordlevel ngram with/without padding
+
+- silben: pseudo syllable
+
+- ohneKon: sting without consonant
+
+- ohnVoka: string without vowel
+
+- justKLEIN: string of just stopwords
+
+- justGROSZ: string with no stopwords
+
+- toKKC: every word as head, body, tail, equal separation
+
+- toKKCnSufixWords: every word as a array of head, body, tail possible letter sequences
+
+- fnb: shallow neighbourhood representation
+
+- gettransformarray: get a array of a string with letter transformations
+
+
