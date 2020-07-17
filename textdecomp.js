@@ -6528,7 +6528,7 @@ function einzeilzeichenzuLauteinheiten( dieeinzelzeichen, diphtong,
 	for(let i = 1; i < lele; i++){
 		let einheit = dieeinzelzeichen[i-1]+dieeinzelzeichen[i];
 		let di = diphtong[ einheit ];
-		//console.log(einheit, buchstaebliches, dieeinzelzeichen);
+		console.log(i, einheit, buchstaebliches, dieeinzelzeichen);
 		if(di){ // ist diphtong
 			buchstaebliches.pop();
 			buchstaebliches.push( einheit );
@@ -6554,8 +6554,9 @@ function einzeilzeichenzuLauteinheiten( dieeinzelzeichen, diphtong,
 							buchstaebliches.push( dkeinzeln[ d ] );
 						}
 					} else { //nicht doppelkonsonant -- also einfach zeichen übernhemen
-						//console.log(dieeinzelzeichen[i-1], dieeinzelzeichen[i]);
+						//console.log("doppelkonso", dieeinzelzeichen[i-1], dieeinzelzeichen[i]);
 						if(i == 1){ 
+                        //console.log("1111")
 						//ersten Buchstaben nicht vergessen, und kontrollieren, ob er ein doppelkonsonant
 							let doppelkon = doppelkonsonanz[ dieeinzelzeichen[i-1] ];
 							if( doppelkon ){ //ist doppelkonsonant
@@ -6820,7 +6821,7 @@ function trennSLAT( A ){
 		if( letzteeinheit ){ //letzter konsonant
 			silben.push( coda.join("") );
 		}
-		//console.log(lautliches.toString(), silben.toString());
+		console.log(lautliches.toString(), silben.toString());
 		if ( silben[0] == "-"){
 			silben[0] = "";
 		}
@@ -6834,8 +6835,9 @@ function trennSLAT( A ){
 
 
 function silben( A ){ //string input
-    let insilb = trennSLAT( A );
     
+    let insilb = trennSLAT( A );
+    console.log(insilb, len( insilb ),len(A)+1, len( insilb ) <= len(A)+1)
     if( len( insilb ) <= len(A)+1 ){
         insilb = trennSGRInurarray( A.split( " " ) );
     }
@@ -7051,7 +7053,7 @@ function justKLEIN( A ){//array input
     const lenA = len( A );  
     for( let a = 0; a < lenA; a+=1 ){
         //print( A[a], iskleineswort( A[a] ) );
-        if( iskleineswort( A[a] ) || stopGR[ A[a] ] ){
+        if( iskleineswort( A[a] ) != false || stopGR[ A[a] ] || stopLA[ A[a] ] ){
             toret.push( A[a] );
         }
     }
@@ -7063,7 +7065,7 @@ function justGROSZ( A ){//array input
     let toret = [];  
     const lenA = len( A );  
     for( let a = 0; a < lenA; a+=1 ){
-        if( !(iskleineswort( A[a] ) || stopGR[ A[a] ]) ){
+        if( !(iskleineswort( A[a] ) != false || stopGR[ A[a] || stopLA[ A[a] ] ]) ){
             toret.push( A[a] );
         }
     }
@@ -7135,22 +7137,13 @@ function toKKCnSufix( A ){//partitionen (as a terminus technicus from kombinator
     let lele = A.length;
     for( let h = 0; h < lele; h+=1 ){
         let kopf = A.substring(0,h);
-        let koerper = "";
-        let coda = "";
-        let howmuch = -h;
-        const elel =  (lele-h)+1
-        for( let z = h; z < elel; z+=1 ){
-            koerper = A.substring(h, (z+h));
-            coda = A.substring( (z+h), lele );
-            //console.log(h, z, "kopf", kopf, "koerper", koerper, "coda", coda );
+        for( let z = 0; z < lele-h+1; z+=1 ){
+            let koerper = A.substring(h, (z+h));
+            let coda = A.substring( (z+h), lele );
             partitionen.push( [ kopf, koerper, coda ] );
         }
         
-        for( let z = h; z < lele; z+=1 ){
-            koerper = A.substring(h, (z+h));
-            //console.log(h, z, "kopf", kopf, "koerper", koerper, "coda", coda );
-            partitionen.push( [ kopf, koerper, coda ] );
-        }
+        
     }
     partitionen.push( [ A, "", "" ] );
     return partitionen;
@@ -7370,17 +7363,17 @@ function schaneigh( simplekonkordanz, aDaaA ){
         if( cleanedword === "" ){
             continue
         }           
-        console.log(cleanedword, simplekonkordanz[ cleanedword ], cleanedword != "",
+        /*console.log(cleanedword, simplekonkordanz[ cleanedword ], cleanedword != "",
             simplekonkordanz[ cleanedword ] <= howmuchhaufisselten,
             !hasKEY( stopGR, cleanedword.toLowerCase() ), 
             !hasKEY( stopLA, cleanedword.toLowerCase() ), 
-            !isnumber( cleanedword ))
+            !isnumber( cleanedword ))*/
         if( cleanedword != "" && 
             simplekonkordanz[ cleanedword ] <= howmuchhaufisselten &&
             !hasKEY( stopGR, cleanedword.toLowerCase() ) && 
             !hasKEY( stopLA, cleanedword.toLowerCase() ) && 
             !isnumber( cleanedword ) ){
-                console.log(cleanedword);
+                //console.log(cleanedword);
                 //nachbarschaft
                 let nachba = [];
                 let st = aw-(parseInt(nachbarschaft/2)+1)
@@ -7484,10 +7477,10 @@ function zerl(){
     Strout += "<b>Große Wörter:</b><br>";
     Strout += justGROSZ( wlist ).join("/ ")+"<br><br>";
     
-    Strout += "<b>Kopf-Körper-Code I:</b><br>";
+    Strout += "<b>Kopf-Körper-Coda I:</b><br>";
     Strout += toKKC( aswords ).join("/ ")+"<br><br>";
 
-    Strout += "<b>Partitionen (Kopf-Körper-Code II):</b><br>";
+    Strout += "<b>Partitionen (Kopf-Körper-Coda II):</b><br>";
     let tempstr = "";
     let perwordpartionined = toKKCnSufixWords( aswords );
     for( let w in perwordpartionined ){
@@ -7521,6 +7514,5 @@ function zerl(){
     document.getElementById( "mata").innerHTML = Strout;
     
 }
-
 
 
