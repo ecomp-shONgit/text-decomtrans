@@ -15,6 +15,8 @@ To get a notion of what the software is good for an how to use it visit this pag
 
 http://ecomparatio.net/~khk/NORM-DECOMP-DIST/zerl.html
 
+To run minimal python test call on commandline: python3 textdecomp.py
+
 # Functions
 
 - ngramWhole: ngram for entire string
@@ -39,4 +41,6 @@ http://ecomparatio.net/~khk/NORM-DECOMP-DIST/zerl.html
 
 - gettransformarray: get a array of a string with letter transformations
 
+# USAGE
 
+Inlcude the textnorm.py if you use this in your Python3 software.
