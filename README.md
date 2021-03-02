@@ -19,9 +19,11 @@ To run minimal python test call on commandline: python3 textdecomp.py
 
 # Functions
 
-- ngramWhole: ngram for entire string
+- ngramWhole: letter ngram for entire string
 
-- ngramWords: wordlevel ngram with/without padding
+- ngramWords: letter ngram for wordlevel with/without padding
+
+- genngram: general ngram builder
 
 - silben: pseudo syllable
 
