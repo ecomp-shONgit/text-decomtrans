@@ -33,9 +33,10 @@ GLOBALS FROM silben.js MISSING
 let howmuchhaufisselten = 25;
 let nachbarschaft = 6; //gerade zahl 10, 12, ... 20
 
-let satzzeichen = new Array(".", ";", ",", ":", "!", "?", "·");
+//let satzzeichen = new Array(".", ";", ",", ":", "!", "?", "·");
+
 let trenner = {"-":1}; //silbentrennersymbol
-let leidenklammerung = {"[":"im Original beschädigt", "]":"im Original beschädigt",  "(": "im Original augelassen", ")":"im Original augelassen", "<":"Korrektur eines Fehlers aus dem Original",">":"Korrektur eines Fehlers aus dem Original", "{":"im Vergleich zum Original getilgte Worte","}":"im Vergleich zum Original getilgte Worte", "[[":"Rasur","]]":"Rasur"}; //editorische Klammerung
+//let leidenklammerung = {"[":"im Original beschädigt", "]":"im Original beschädigt",  "(": "im Original augelassen", ")":"im Original augelassen", "<":"Korrektur eines Fehlers aus dem Original",">":"Korrektur eines Fehlers aus dem Original", "{":"im Vergleich zum Original getilgte Worte","}":"im Vergleich zum Original getilgte Worte", "[[":"Rasur","]]":"Rasur"}; //editorische Klammerung
 
 /*buchstaben und bewertungen*/
 //lateinische Zeichen / Verwendungen / Bedeutungen im grammatischen System
@@ -87,6 +88,7 @@ let dauerlauteGRI = { "λ":1, "ρ":1, "μ":1, "ν":1,  "ϝ":1, "σ":1 };
 let spirantesGRI = {"ϝ":"labial", "σ":"dental"};
 let nasalesGRI = {"μ":"labial", "ν":"dental"};
 let liquidaeGRI = {"λ":"dental", "ρ":"dental"};
+
 let konsonantengruppenambeginneineswortes = {
 'βγ': 1,
 'βδ': 65,
@@ -6379,7 +6381,7 @@ let stopIT = {};
 function normalizearraykeys(){
 	//die Funktion muß einmal zu beginn des Seitenaufrufs überalle array laufen
 	trenner = normarrayk( trenner );
-	leidenklammerung = normarrayk( leidenklammerung );
+	//leidenklammerung = normarrayk( leidenklammerung );
 	buchstLAT = normarrayk( buchstLAT );
 	vokaleLAT = normarrayk( vokaleLAT );
 	disptongLAT = normarrayk( disptongLAT );
@@ -6498,6 +6500,11 @@ function ngramWords( B, n, padding ){
     return kuku;
 }
 
+function genngram( C, n ){
+    //general ngrtam build
+    return ngram( C, n, false );
+}
+
 function ngram( A, n, padding ){ //string input
     //bad
     if( n >= A.length  ){
@@ -6517,6 +6524,27 @@ function ngram( A, n, padding ){ //string input
         vecA.push( A.slice(i,i+n) );
     }
     return vecA;
+}
+
+//suffix trees
+function buildTree(){
+    console.log("Build Tree Trigram");
+    treeGram = {};
+
+    for( let lang in inverseabkAWWAkba ){
+        let vecTris = ngram( lang, 3, False );
+        let kurz = inverseabkAWWAkba[ lang ];
+        for( let v = 0; v < len( vecTris )-1; v+=1 ){
+            if( treeGram[ vecTris[v] ] ){
+                if( treeGram[ vecTris[v] ][0].indexOf( kurz ) == -1 ){
+                    treeGram[ vecTris[v] ][0].push(kurz);
+                }
+            } else {
+                treeGram[ vecTris[v] ] = [ [kurz], { } ];
+            }
+        }
+    }   
+    console.log("End Tree Tri");
 }
 
 //SILBEN
@@ -6702,7 +6730,6 @@ function trennSLAT( A ){
 		
 		let silben = [];
 		let letzteeinheit = "";
-		let erstesilbe = true;
 		let coda = [];
 		let noVokalKonso = true;
 		let labiovelare = false;
@@ -6750,11 +6777,11 @@ function trennSLAT( A ){
 						}
 					}
 					//console.log("regel 5, labiovelare", silben);
-					silben.push( rest.pop("") );
+					silben.push( rest.pop() );
 					silben.push( rest.join("") );
 					silben.push( lautlicheeinheit );
 				} else if( vokaleLAT[ letzteeinheit ] == 5 && //regel u oder v
-						   vokaleLAT[ l-2 ] == undefined &&
+						   //vokaleLAT[ l-2 ] == undefined &&
 						   vokaleLAT[ lautlicheeinheit ] != 2){
 					//console.log("regel u oder v");
 					silben.push( coda.join("") );
@@ -6764,7 +6791,7 @@ function trennSLAT( A ){
 						   vokaleLAT[ lautlicheeinheit ] &&
 						   vokaleLAT[ lautlicheeinheit ] != 4 &&
 							noVokalKonso == false){ //regel 6 i oder j
-					coda += lautlicheeinheit; //also als konsoant gewertet
+					coda.push( lautlicheeinheit );//coda += lautlicheeinheit; //also als konsoant gewertet
 					//vorher war entweder konsonant vokal oder vokal vokal
 					let nostrich = true;
 					let rest = [];
@@ -6777,7 +6804,7 @@ function trennSLAT( A ){
 						}
 					}
 					//console.log("i / j Regel", rest, silben);
-					silben.push( rest.pop("") );
+					silben.push( rest.pop( ) );
 					silben.push("-");
 					silben.push( rest.join("") );
 					silben.push( lautlicheeinheit );
@@ -7451,6 +7478,9 @@ function zerl(){
 
     Strout += "<b>2 gram gesamter Text:</b><br>";
     Strout += ngramWhole( stristrstrung, 2 ).join("/ ") +"<br><br>";
+
+    Strout += "<b>3 gram Wordlevel:</b><br>";
+    Strout += genngram( aswords, 3 ).join("/ ") +"<br><br>";
 
     Strout += "<b>3 gram der Wörter nopadding:</b><br>";
     Strout += ngramWords( aswords, 3, False ).join("/ ")+"<br><br>";
