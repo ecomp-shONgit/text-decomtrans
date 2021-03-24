@@ -21,7 +21,7 @@ along with this program.  If not, see <http:#www.gnu.org/licenses/>.
  
 '''PYTHON3'''
 
-import textnorm, math
+import textnorm, math, re
 
 howmuchhaufisselten = 25
 nachbarschaft = 6 #gerade zahl 10, 12, ... 20
@@ -6717,7 +6717,7 @@ def einzeilzeichenzuLauteinheiten( dieeinzelzeichen, diphtong,
 
 
 def trennSGRI( stringii ):
-    diewoerter = ohnesatzzeichen( iotasubiotoadL( GRvorbereitungT( stringii ))) #holt den Text und spaltet ihn an den Leerzei., nennt das worte
+    diewoerter = textnorm.ohnesatzzeichen( textnorm.iotasubiotoadL( textnorm.GRvorbereitungT( stringii ))) #holt den Text und spaltet ihn an den Leerzei., nennt das worte
     et = trennSGRInurarray( diewoerter )
     return et
 
@@ -6860,7 +6860,7 @@ def trennSLAT( A ):
             if( diesvokalisch == True and  vorhervokalisch == True ):  #vokal-vokal uebergang
                 
                 #ACHTUNG DIE REIHENFOLGE DER IF ABFRAGEN STELLT EIN HIERARCHIE AUCH DER REGELN DAR
-                if( vokaleLAT[ letzteeinheit ] == vokaleLAT[ lautlicheeinheit ]): #zwei gleiche vokale
+                if( letzteeinheit == lautlicheeinheit): #zwei gleiche vokale
                     #print("zwei gleiche vokle")
 
                     silben.append( "".join( coda ) )
@@ -6905,16 +6905,16 @@ def trennSLAT( A ):
                     rest = []
                     while( nostrich ):
                         curr = silben.pop()
-                        if( trenner[ curr ] or curr == None ):
+                        if( curr in trenner or curr == None ):
                             nostrich = False
                         else:
                             rest.append(curr)
                         
                     
-                    #print("i / j Regel", rest, silben)
-                    silben.append( rest.pop("") )
-                    silben.append("-")
-                    silben.append( "".join(rest) )
+                    #print("i / j Regel", rest, silben, rest.pop())
+                    silben.append( rest.pop( ) )
+                    silben.append( "-" )
+                    silben.append( "".join( rest ) )
                     silben.append( lautlicheeinheit )
                 else: #einfach zwei vokale aufeinander dann trennen
                     #print("einfachzwei vokale", coda)
@@ -6964,23 +6964,50 @@ def trennSLAT( A ):
     #
     return ergtext
 
+latlet = re.compile( r"[a-z]" );
+def islatinletter( L ):
+    return len(L) == 1 and re.match( latlet, L );
+
+
+def islatinletters( w ):
+    bu = list( w )
+    countletters = 0;
+    for be in range( len( bu ) ):
+        if( islatinletter( bu[be] ) ):
+            countletters += 1;
+
+    if( countletters >= (len(bu)/2) ):
+        return True;
+    else:
+        return False;
+    
 
 def silben( A ): #string input
-    insilb = trennSLAT( A )
+    #insilb = trennSLAT( A )
     #print(len( insilb ), len(A)+1, len( insilb ) <= len(A)+1 )
-    if( len( insilb ) <= len(A)+1 ):
-        insilb = trennSGRInurarray( A.split( " " ) )
+    #if( len( insilb ) <= len(A)+1 ):
+    #    insilb = trennSGRI( A )
     #print(insilb)
-    WoeINSilben  = insilb.split(" ") # hier müssen wir noch unterscheiden, ob griechisch oder lateinische wörter
-    allesilben = []
-    lele = len(WoeINSilben)
-    for w in range( lele):
-        if( WoeINSilben[ w ] != "" ):
-            spispa = WoeINSilben[ w ].split("-")
-            lelele = len( spispa ) 
-            for s in range( lelele ):
-                 allesilben.append( spispa[ s ] )
-            
+    #WoeINSilben  = insilb.split(" ") # hier müssen wir noch unterscheiden, ob griechisch oder lateinische wörter
+    #allesilben = []
+    #lele = len(WoeINSilben)
+    #for w in range( lele):
+    #    if( WoeINSilben[ w ] != "" ):
+    #        spispa = WoeINSilben[ w ].split("-")
+    #        lelele = len( spispa ) 
+    #        for s in range( lelele ):
+    #             allesilben.append( spispa[ s ] )
+       
+    WS = A.split( " " );
+    allesilben = [];
+    for t in range( len(WS) ):
+        B = WS[t];
+        if( islatinletters( B ) ):
+            allesilben.append( trennSLAT( B ) )
+        else:
+            allesilben.append( trennSGRI( B ) )
+        
+  
     return allesilben
 
 
@@ -7017,10 +7044,19 @@ def ohneKon( A ): #input String
     return "".join( bun )
 
 def ohnVoka( A ): #input string
-    retstr = ohneAusKEYS( A, vokaleLAT )
+    #retstr = ohneAusKEYS( A, vokaleLAT )
     
-    if( len(retstr) == len(A) ):
-        retstr = ohneAusKEYS( A, vokaleGRI )
+    #if( len(retstr) == len(A) ):
+    #    retstr = ohneAusKEYS( A, vokaleGRI )
+    WS = A.split( " " )
+    retstr = ""
+    for be in range( len( WS ) ):
+        B = WS[be];
+        if( islatinletters(B) ):
+            retstr += " " + ohneAusKEYS( B, vokaleLAT );
+        else:
+            retstr += " " + ohneAusKEYS( B, vokaleGRI );
+        
     
     return retstr
 
@@ -7415,10 +7451,10 @@ def schaneigh( simplekonkordanz, aDaaA ):
                     
                 if( cleanedword in neighbournoonelovesyou ):
                     for n in nachba:
-                        if( nachba[n] in neighbournoonelovesyou[ cleanedword ][0] ):
-                            neighbournoonelovesyou[ cleanedword ][0][nachba[n]] += 1
+                        if( n in neighbournoonelovesyou[ cleanedword ][0] ):
+                            neighbournoonelovesyou[ cleanedword ][0][n] += 1
                         else:
-                            neighbournoonelovesyou[ cleanedword ][0][nachba[n]] = 1
+                            neighbournoonelovesyou[ cleanedword ][0][n] = 1
                 else:
                     nana = {}
                     for n in range(len(nachba)):
@@ -7468,7 +7504,7 @@ def zerl():
         stopLA = gugu
 
     stristrstrung = "πρῶτον μὲν οὐσίαν κεκτημένον μηδεμίαν μηδένα ἰδίαν, ἂν μὴ πᾶσα ἀνάγκη: ἔπειτα οἴκησιν καὶ ταμιεῖον μηδενὶ εἶναι μηδὲν τοιοῦτον, εἰς ὃ οὐ πᾶς ὁ βουλόμενος εἴσεισι: τὰ δ᾽ ἐπιτήδεια, ὅσων δέονται ἄνδρες ἀθληταὶ πολέμου σώφρονές τε καὶ ἀνδρεῖοι, ταξαμένους παρὰ τῶν ἄλλων πολιτῶν δέχεσθαι μισθὸν τῆς φυλακῆς τοσοῦτον ὅσον μήτε περιεῖναι αὐτοῖς εἰς τὸν ἐνιαυτὸν μήτε ἐνδεῖν: φοιτῶντας δὲ εἰς συσσίτια ὥσπερ ἐστρατοπεδευμένους κοινῇ ζῆν"
-
+    stristrstrung = "„[IX]” ⁙ ἀλλ’ ἑτέραν τινὰ φύσιν ἄπειρον', ἐξ ἧς ἅπαντας γίνεσθαι τοὺς οὐρανοὺς καὶ τοὺς ἐν αὐτοῖς κόσμους· ἐξ ὧν δὲ ἡ γένεσίς ἐστι τοῖς οὖσι, καὶ τὴν φθορὰν εἰς ταῦτα γίνεσθαι κατὰ τὸ χρεών. διδόναι γὰρ αὐτὰ δίκην καὶ τίσιν ἀλλήλοις τῆς ἀδικίας κατὰ τὴν τοῦ χρόνου τάξιν, ποιητικωτέροις οὕτως ὀνόμασιν αὐτὰ λέγων· δῆλον δὲ ὅτι τὴν εἰς ἄλληλα μεταβολὴν τῶν τεττάρων στοιχείων οὗτος θεασάμενος οὐκ ἠξίωσεν ἕν τι τούτων ὑποκείμενον ποιῆσαι, ἀλλά τι ἄλλο παρὰ ταῦτα. οὗτος δὲ οὐκ ἀλλοιουμένου τοῦ στοιχείου τὴν γένεσιν ποιεῖ, ἀλλ’ ἀποκρινομένων τῶν ἐναντίων διὰ τῆς ἀιδίου κινή- σεως· 1 Summá pecúniae, quam dedit in [bla bla bla] aerarium vel plebei Romanae vel dimissis militibus=> denarium sexiens milliens. 2 Opera fecit nova § aedem Martis, Iovis Tonantis et Feretri, Apollinis, díví Iúli, § Quirini, § Minervae, Iunonis Reginae, Iovis Libertatis, Larum, deum Penátium, § Iuventatis, Matris deum, Lupercal, pulvinar ad [11] circum, § cúriam cum chalcidico, forum Augustum, basilicam 35 Iuliam, theatrum Marcelli, § porticus . . . . . . . . . . , nemus trans Tiberím Caesarum. § 3 Refécit Capitolium sacrasque aedes numero octoginta duas, theatrum Pompeí, aquarum rivos, viam Flaminiam.  Ϗ ϗ ϚϛȢȣꙊꙋἀἁἂἃἄἅἆἇἈἉἊἋἌἍἎἏἐἑἒἓἔἕἘἙἚἛἜἝἠἡἢἣἤἥἦἧἨἩἪἫἬἭἮἯἰἱἲἳἴἵἶἷἸἹἺἻἼἽἾἿὀὁὂὃὄὅὈὉὊὋὌὍὐὑὒὓὔὕὖὗὙὛὝὟὠὡὢὣὤὥὦὧὨὩὪὫὬὭὮὯὰάὲέὴήὶίὸόὺύὼώ	ᾀᾁᾂᾃᾄᾅᾆᾇᾈᾉᾊᾋᾌᾍᾎᾏᾐᾑᾒᾓᾔᾕᾖᾗᾘᾙᾚᾛᾜᾝᾞᾟᾠᾡᾢᾣᾤᾥᾦᾧᾨᾩᾪᾫᾬᾭᾮᾯᾰᾱᾲᾳᾴᾶᾷᾸᾹᾺΆᾼ᾽ι᾿῀῁ῂῃῄῆῇῈΈῊΉῌ῍῎῏ῐῑῒΐῖῗῘῙῚΊ῝῞῟ῠῡῢΰῤῥῦῧῨῩῪΎῬ῭΅`ῲῳῴῶῷῸΌῺΏῼ´῾ͰͱͲͳʹ͵Ͷͷͺͻͼͽ;Ϳ΄΅Ά·ΈΉΊΌΎΏΐΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩΪΫάέήίΰαβγδεζηθικλμνξοπρςστυφχψωϊϋόύώϏϐϑϒϓϔϕϖϗϘϙϚϛϜϝϞϟϠϡϢϣϤϥϦϧϨϩϪϫϬϭϮϯϰϱϲϳϴϵ϶ϷϸϹϺϻϼϽϾϿ Αι αι γγ γκ γξ γχ ου Υι υι ἄϋλος αὐλός  τί φῄς; γραφὴν σέ τις, ὡς ἔοικε, γέγραπται οὐ γὰρ ἐκεῖνό γε καταγνώσομαι, ὡς σὺ ἕτερον. δ̣[ὲ κ]αὶ";
     Strout = "--Eingabe:--\n"
     Strout += stristrstrung +"\n"
 
@@ -7515,7 +7551,7 @@ def zerl():
     Strout += "/ ".join(justGROSZ( wlist ))+"\n\n"
     
     Strout += "--Kopf-Körper-Coda I:--\n"
-    Strout += "/ ".join( toKKC( aswords ))+"\n\n"
+    #Strout += "/ ".join( toKKC( aswords ))+"\n\n"
 
     Strout += "--Partitionen (Kopf-Körper-Coda II):--\n"
     tempstr = ""
@@ -7526,7 +7562,7 @@ def zerl():
         
         tempstr += " \n\n "
     
-    Strout += tempstr+"\n\n"
+    #Strout += tempstr+"\n\n"
 
     Strout += "--als flache Nachbarschaft:--\n"
     stringtobeout = ""
