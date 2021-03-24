@@ -6556,7 +6556,7 @@ function einzeilzeichenzuLauteinheiten( dieeinzelzeichen, diphtong,
 	for(let i = 1; i < lele; i++){
 		let einheit = dieeinzelzeichen[i-1]+dieeinzelzeichen[i];
 		let di = diphtong[ einheit ];
-		console.log(i, einheit, buchstaebliches, dieeinzelzeichen);
+		//console.log(i, einheit, buchstaebliches, dieeinzelzeichen);
 		if(di){ // ist diphtong
 			buchstaebliches.pop();
 			buchstaebliches.push( einheit );
@@ -6607,9 +6607,16 @@ function einzeilzeichenzuLauteinheiten( dieeinzelzeichen, diphtong,
 	return buchstaebliches;
 }
 
-function trennSGRI(){
-	let textelem = document.getElementById( "inputtext"); //holt das html Element in das der Text eingegeben wird
-	let diewoerter = ohnesatzzeichen( iotasubiotoadL( GRvorbereitungT( textelem.value ))); //holt den Text und spaltet ihn an den Leerzei., nennt das worte
+function trennSGRI( A ){
+    let textelem = null;
+    let diewoerter = [];
+    if( A === undefined ){
+	    textelem = document.getElementById( "inputtext"); //holt das html Element in das der Text eingegeben wird
+	    diewoerter = diewoerter = ohnesatzzeichen( iotasubiotoadL( GRvorbereitungT( textelem.value ))); //holt den Text und spaltet ihn an den Leerzei., nennt das worte
+	} else {
+        diewoerter = diewoerter = ohnesatzzeichen( iotasubiotoadL( GRvorbereitungT( A )));;
+    }
+	
 	let et = trennSGRInurarray( diewoerter );
 	return et;
 }
@@ -6703,9 +6710,9 @@ function trennSLAT( A ){
     let diewoerter = [];
     if( A === undefined ){
 	    textelem = document.getElementById( "inputtext"); //holt das html Element in das der Text eingegeben wird
-	    diewoerter = GRvorbereitungT( textelem.value.split("v").join("u") ); //holt den Text und spaltet ihn an den Leerzei., nennt das worte
+	    diewoerter = GRvorbereitungT( textelem.value.split("u").join("v") ); //holt den Text und spaltet ihn an den Leerzei., nennt das worte
 	} else {
-        diewoerter = GRvorbereitungT( A.split("v").join("u") );
+        diewoerter = GRvorbereitungT( A.split("u").join("v") );
     }
 	let ergtext = ""; //darin werden die Ergebnisse der Trennung in Silben gespeichert
 	for( let w in diewoerter ){ // für alles was wort bedeuten soll
@@ -6848,7 +6855,7 @@ function trennSLAT( A ){
 		if( letzteeinheit ){ //letzter konsonant
 			silben.push( coda.join("") );
 		}
-		console.log(lautliches.toString(), silben.toString());
+		//console.log(lautliches.toString(), silben.toString());
 		if ( silben[0] == "-"){
 			silben[0] = "";
 		}
@@ -6860,16 +6867,47 @@ function trennSLAT( A ){
 	//document.getElementById( "ergeb" ).innerHTML = document.getElementById( "ergeb" ).innerHTML +"<b>"+diewoerter.join(" ")+"</b><br/>"+"<i>"+ ergtext +"</i><br/><br/>";
 }
 
+let latlet = /[a-z]/i;
+function islatinletter( L ){
+    return L.length === 1 && L.match( latlet );
+}
 
+function islatinletters( w ){
+    let bu = w.split( "" );
+    let countletters = 0;
+    for( let be = 0; be < bu.length; be += 1 ){
+        if( islatinletter( bu[be] ) ){
+            countletters += 1;
+        }
+    }
+
+    if( countletters >= (bu.length/2)){
+        return true;
+    } else {
+        return false;
+    }
+}
+
+ 
 function silben( A ){ //string input
-    
-    let insilb = trennSLAT( A );
+    let WS = A.split( " " );
+    let allesilben = [];
+    for( let t = 0; t < WS.length; t+=1 ){
+        let B = WS[t];
+        if( islatinletters( B ) ){
+            allesilben.push( trennSLAT( B ) );
+        } else {
+            allesilben.push( trennSGRI( B ) );
+        }
+
+    }
+    /*let insilb = t
     console.log(insilb, len( insilb ),len(A)+1, len( insilb ) <= len(A)+1)
     if( len( insilb ) <= len(A)+1 ){
-        insilb = trennSGRInurarray( A.split( " " ) );
-    }
-    let WoeINSilben  = insilb.split(" "); // hier müssen wir noch unterscheiden, ob griechisch oder lateinische wörter
-    let allesilben = [];
+        insilb = 
+    }*/
+    /*let WoeINSilben  = insilb.split(" "); // hier müssen wir noch unterscheiden, ob griechisch oder lateinische wörter
+    
     const lele = WoeINSilben.length;
     for( let w = 0; w < lele; w++  ){
         if( WoeINSilben[ w ] != "" ){
@@ -6880,6 +6918,7 @@ function silben( A ){ //string input
             }
         }
     }
+    */
     return allesilben;
 }
 
@@ -6922,11 +6961,17 @@ function ohneKon( A ){ //input String
 }
 
 function ohnVoka( A ){ //input string
-    let retstr = ohneAusKEYS( A, vokaleLAT );
-    
-    if( len(retstr) === len(A) ){
-        retstr = ohneAusKEYS( A, vokaleGRI );
-    } 
+    let WS = A.split( " " );
+    let retstr = "";
+    for( let be = 0; be < WS.length; be += 1 ){
+        let B = WS[be];
+        if( islatinletters(B) ){
+            retstr += " " + ohneAusKEYS( B, vokaleLAT );
+        } else {
+            retstr += " " + ohneAusKEYS( B, vokaleGRI );
+        }
+    }
+
     return retstr;
 }
 
@@ -7524,7 +7569,7 @@ function zerl(){
     Strout += "<b>als flache Nachbarschaft:</b><br>";
     let stringtobeout = "";
     let gutgemacht = fnb( stristrstrung );
-    console.log(gutgemacht);
+    //console.log(gutgemacht);
     for( let vv in gutgemacht ){
         let strighgsjhsj = "";
         for(let uuu in gutgemacht[vv][0]){
