@@ -2,8 +2,12 @@
 # -*- coding: utf-8 -*- 
 
 #************************************************** 
-# 2020 text decomposition and transformation Python Lib, Prof. Charlotte Schubert Alte Geschichte, Leipzig 
-
+# 2020 string (text) decomposition and transformation Python Lib, Prof. Charlotte Schubert Alte Geschichte, Leipzig 
+# Def: A decomposition of a string, is a bijective function that assoziates a position and length in the sequence with a 
+# member of a not ordered set of subsequences. 
+# Regularly this decomposition is said to be a representation of 
+# features of a text. We reject this view, the features of a text may be discovered in a (statistical) analysis. 
+# Decompositioin is just a way of supporting the analysis. 
  
 ''' 
 GPLv3 copyrigth
@@ -6640,12 +6644,25 @@ def ngramWhole( A, n ): #string input, but for more than a word
 
 
 def ngramWords( B, n, padding ):
+    #print(B)
+    #print(n)
+    #print(padding)
     #check B instance of array
     kuku = []
     for t in range(len(B)): 
         kuku.append( ngram( B[t], n, padding ) )    
     return kuku
 
+def ngramWordsFlat(B, n, padding): #stylo
+    n = int(n)
+    padding = bool(padding)
+    kuku = []
+    #print(padding)
+    for t in range(len(B)): 
+        g = ngram( B[t], n, padding )
+        for gi in range(len(g)):
+            kuku.append( g[gi] )    
+    return kuku
 
 def ngram( A, n, padding ): #string input
     #bad
@@ -6860,7 +6877,11 @@ def trennSLAT( A ):
             if( diesvokalisch == True and  vorhervokalisch == True ):  #vokal-vokal uebergang
                 
                 #ACHTUNG DIE REIHENFOLGE DER IF ABFRAGEN STELLT EIN HIERARCHIE AUCH DER REGELN DAR
-                if( letzteeinheit == lautlicheeinheit): #zwei gleiche vokale
+                if( letzteeinheit in disptongLAT ): #vokal folgt auf diphton, dann trenne wie im els dieses if blocks - einfach zwei vokale
+                    silben.append( "".join(coda) )
+                    silben.append( "-" )
+                    silben.append( lautlicheeinheit )
+                elif( letzteeinheit == lautlicheeinheit ): #zwei gleiche vokale
                     #print("zwei gleiche vokle")
 
                     silben.append( "".join( coda ) )
@@ -6977,12 +6998,39 @@ def islatinletters( w ):
             countletters += 1;
 
     if( countletters >= (len(bu)/2) ):
-        return True;
+        return True
     else:
-        return False;
-    
+        return False
 
-def silben( A ): #string input
+def silbenWithprep( A ):
+    stristrstrung = " ".join( A ) 
+    stristrstrung = textnorm.normatext(  stristrstrung, textnorm.analysisNormalform )
+    WS = stristrstrung.split( " " )
+    E = silbenFlat( WS )  
+    #print(E)
+    return E
+
+def silbenString( string ):
+    WS = string.split( " " )
+    return silben( WS )
+
+def silbenFlat( WS ): #string input
+    allesilben = [];
+    for t in range( len(WS) ):
+        B = WS[t];
+        if( islatinletters( B ) ):
+            E = trennSLAT( B ).split("-")
+            for ei in range(1,len(E)):
+                allesilben.append( E[ei].strip() )
+        else:
+            
+            E = trennSGRI( B ).split("-")
+            for ei in range(1,len(E)):
+                allesilben.append( E[ei].strip() )
+    
+    return allesilben
+
+def silben( WS ): #string input
     #insilb = trennSLAT( A )
     #print(len( insilb ), len(A)+1, len( insilb ) <= len(A)+1 )
     #if( len( insilb ) <= len(A)+1 ):
@@ -6997,17 +7045,16 @@ def silben( A ): #string input
     #        lelele = len( spispa ) 
     #        for s in range( lelele ):
     #             allesilben.append( spispa[ s ] )
-       
-    WS = A.split( " " );
+         
     allesilben = [];
     for t in range( len(WS) ):
         B = WS[t];
         if( islatinletters( B ) ):
             allesilben.append( trennSLAT( B ) )
         else:
+            #print(trennSGRI( B ), B )
             allesilben.append( trennSGRI( B ) )
-        
-  
+          
     return allesilben
 
 
@@ -7028,36 +7075,44 @@ def ohneAusKEYS( A, kvlist ): # string input
             bun.append( bu[b] )
     return "".join( bun )
 
+def ohneKonString( string ):
+    WS = string.lower().split( " " )
+    return ohneKon( WS )
 
-def ohneKon( A ): #input String
-    bu = list( A.lower() )
-    bun = []
-    lenbu = len( bu )
-    for b in range( lenbu ):
-        ohnealles = textnorm.delall( bu[b] )
-        if( hasKEY( vokaleLAT , ohnealles) ):
-            bun.append( bu[b] )
-        elif( hasKEY( vokaleGRI , ohnealles) ):
-            bun.append( bu[b] )
-        elif( bu[b] == " " ):
-            bun.append( bu[b] )
-    return "".join( bun )
-
-def ohnVoka( A ): #input string
-    #retstr = ohneAusKEYS( A, vokaleLAT )
-    
-    #if( len(retstr) == len(A) ):
-    #    retstr = ohneAusKEYS( A, vokaleGRI )
-    WS = A.split( " " )
-    retstr = ""
+def ohneKon( WS ): #input String
+    #bu = list( A.lower() )
+    #bun = []
+    #lenbu = len( bu )
+    #for b in range( lenbu ):
+    #    ohnealles = textnorm.delall( bu[b] )
+    #    if( hasKEY( vokaleLAT , ohnealles) ):
+    #        bun.append( bu[b] )
+    #    elif( hasKEY( vokaleGRI , ohnealles) ):
+    #        bun.append( bu[b] )
+    #    elif( bu[b] == " " ):
+    #        bun.append( bu[b] )
+    #return "".join( bun )
+    retstr = []
     for be in range( len( WS ) ):
         B = WS[be];
         if( islatinletters(B) ):
-            retstr += " " + ohneAusKEYS( B, vokaleLAT );
+            retstr.append( ohneAusKEYS( B, konLAT ) )
         else:
-            retstr += " " + ohneAusKEYS( B, vokaleGRI );
-        
-    
+            retstr.append( ohneAusKEYS( B, konGRI ) )
+    return retstr
+
+def ohnVokaString( string ):
+    WS = string.lower().split( " " )
+    return ohnVoka( WS )
+
+def ohnVoka( WS ): #input string
+    retstr = []
+    for be in range( len( WS ) ):
+        B = WS[be];
+        if( islatinletters(B) ):
+            retstr.append( ohneAusKEYS( B, vokaleLAT ) )
+        else:
+            retstr.append( ohneAusKEYS( B, vokaleGRI ) )
     return retstr
 
 '''-----------------------------------------------------------------------------
@@ -7149,6 +7204,40 @@ def justKLEIN( A ): #array input
         if( iskleineswort( A[a] ) or A[a] in stopGR or A[a] in stopLA ):
             toret.append( A[a] )    
     return toret
+    
+def justKLEINenc( A, mode ):
+    # mode 0: kein Angabe der Lueckenlänge
+    # mode 1: 3 Niveaus 1 - 5, 5 - 15, 15 - n
+    # mode 2: genaue Lueckenlänge als Angabe
+    toret = []  
+    lenA = len( A )  
+    cc = 0
+    for a in range( lenA ):
+        #print( A[a], iskleineswort( A[a] ) )
+        if( iskleineswort( A[a] ) or A[a] in stopGR or A[a] in stopLA ):
+            if( cc != 0 ):
+                leucklen = str(cc)
+                if( mode == 0 ):
+                    leucklen = ""
+                elif( mode == 1 ):
+                    if(cc <= 5):
+                        leucklen = "a"
+                    elif( cc > 5 and cc <= 15 ):
+                        leucklen = "b"
+                    else:
+                        leucklen = "c"
+                toret.append( "<<"+leucklen+">>" )
+                cc = 0
+            toret.append( A[a] )  
+        else:
+            if( A[a].strip() != ""):
+                cc += 1
+    return toret
+    
+def jukl( A ): #stylo
+    string = " ".join( A )
+    wlist = textnorm.ohnesatzzeichen( textnorm.GRvorbereitungT( string ) )
+    return justKLEIN( wlist )
 
 def justGROSZ( A ): #array input
     toret = []  
@@ -7157,6 +7246,11 @@ def justGROSZ( A ): #array input
         if( not (iskleineswort( A[a] ) or A[a] in stopGR or A[a] in stopLA ) ):
             toret.append( A[a] )
     return toret
+
+def jugr( A ): #stylo
+    string = " ".join( A )
+    wlist = textnorm.ohnesatzzeichen( textnorm.GRvorbereitungT( string ) )
+    return justGROSZ( wlist )
 
 
 '''-----------------------------------------------------------------------------
@@ -7182,6 +7276,17 @@ def toKKC( A ): #array input
 
 
 #n-fix kopf körper coda teilung
+def toKKCnSufixWordsFlat( B ): #B array of "words"
+    nn = []
+    lenb = len(B)
+    for t in range( lenb ):
+        E = toKKCnSufix( B[ t ] )
+        for i in range(len( E )):
+            nn.append( E[i][0] )
+            nn.append( E[i][1] )
+            nn.append( E[i][2] )
+    return nn
+
 def toKKCnSufixWords( B ): #B array of "words"
     nn = []
     lenb = len(B)
@@ -7380,7 +7485,7 @@ def gettransformarray( awordarr ): #words and phrases in this array
 
 '''-----------------------------------------------------------------------------
 
-schallow neighbourhood level
+shallow neighbourhood level
 
 -----------------------------------------------------------------------------'''
 def isupper( awod ):
@@ -7477,7 +7582,65 @@ def fnb( texttt ):
     konundbigi = simplekon( aDaaA )
     return schaneigh( konundbigi[0], aDaaA )
 
+'''-----------------------------------------------------------------------------
 
+PATTERN-OF-TOKEN-LEVEL
+
+-----------------------------------------------------------------------------'''
+def numarray_to_string( A ):
+    return ''.join( map( chr, A ) )
+    
+def to_string( A ):
+    return ''.join( A )
+    
+def pseudosyntagma( A ): #running slow!
+    B = justKLEINenc( A, 1 )
+    
+    Bl = len(B)
+    Bs = ""#to_string( B )
+    Syntagmata = {}
+    buildsyntagmata = True
+    b = 1
+    while( buildsyntagmata ): 
+        if( b > Bl ):
+            buildsyntagmata = False
+        
+        dosearch = True
+        b0 = b - 1
+        b1 = b
+        ol = 1
+        Bs = to_string( B[b1+1:Bl] )
+        while( dosearch ):
+            P = B[ b0 : b1 ]
+            Ps = to_string( P )
+            
+            if( Ps in Syntagmata ):
+                b = b1 + 1
+                dosearch = False
+                break
+            
+            R = [ m.start() for m in re.finditer( Ps, Bs ) ]
+            cl = len(R)
+            
+            #if( cl < ol ):
+            if( cl == 0 ):
+                Syntagmata[Ps] = ol#[P, ol]
+                b = b1 + 1
+                dosearch = False
+            else:
+                ol = cl
+                b1+=1
+                if( b1 > Bl ):
+                    b+=1
+                    dosearch = False
+    allsyntagmata = 0    
+    for k, v in Syntagmata.items():
+        allsyntagmata += v
+    for k, v in Syntagmata.items():
+        Syntagmata[k] = (v/allsyntagmata)
+    return Syntagmata 
+    
+    
 '''-----------------------------------------------------------------------------
 
 TEST
@@ -7535,13 +7698,13 @@ def zerl():
     Strout += "\n\n\n "
 
     Strout += "--Pseudosilben:--\n"
-    Strout += "/ ".join( silben( textnorm.normatext(  stristrstrung, textnorm.analysisNormalform )))+"\n\n"
+    Strout += "/ ".join( silbenString( textnorm.normatext(  stristrstrung, textnorm.analysisNormalform )))+"\n\n"
 
     Strout += "--Ohne Konsonanten:--\n"
-    Strout += ohneKon( stristrstrung )+"\n\n"
+    Strout += " ".join( ohneKonString( stristrstrung )) +"\n\n"
 
     Strout += "--Ohne Vokale:--\n"
-    Strout += ohnVoka( stristrstrung )+"\n\n"
+    Strout += " ".join( ohnVokaString( stristrstrung ))+"\n\n"
     
     wlist = textnorm.ohnesatzzeichen( textnorm.GRvorbereitungT( stristrstrung ) )
     Strout += "--Kleine Wörter:--\n"
@@ -7585,5 +7748,8 @@ def zerl():
 
     print( Strout )
     
+
+    
 if __name__ == "__main__":
-    zerl()
+    print("main textdecomp")
+    #zerl()
