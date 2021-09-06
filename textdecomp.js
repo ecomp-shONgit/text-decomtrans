@@ -6473,13 +6473,87 @@ function normalizearraykeys(){
 	console.log("initiale "+analysisNormalform+" Normaliserung für die Listenschlüssel fertig");
 }
 
+//HELPER, GLOBAL
 
+//suffix trees
+function buildTree(nunu){
+    console.log("Build Tree Trigram abkAW");
+    treeGram = {};
+
+    for( let lang in inverseabkAWWAkba ){
+        let vecTris = ngram( lang, nunu, False );
+        let kurz = inverseabkAWWAkba[ lang ];
+        for( let v = 0; v < len( vecTris )-1; v+=1 ){
+            if( treeGram[ vecTris[v] ] ){
+                if( treeGram[ vecTris[v] ][0].indexOf( kurz ) == -1 ){
+                    treeGram[ vecTris[v] ][0].push(kurz);
+                }
+            } else {
+                treeGram[ vecTris[v] ] = [ [kurz], { } ];
+            }
+        }
+    }   
+    console.log("End Tree Tri");
+}
+
+//Letter statistics of ABKAW
+let letterstatistics = {};
+function buildLetterStat( ){
+    console.log("Build Letter statistics abkAW");
+    let coulet = 0;
+    for( let lang in inverseabkAWWAkba ){
+        let kurz = inverseabkAWWAkba[ lang ];
+        let b = kurz.split("");
+        let B = lang.split("");
+        for(let o in B){
+            coulet += 1;
+            if( letterstatistics[ B[o] ] ){
+                letterstatistics[ B[o] ] += 1;
+            } else {
+                letterstatistics[ B[o] ] = 1;
+            }
+        }
+        for(let o in b){
+            coulet += 1;
+            if( letterstatistics[ b[o] ] ){
+                letterstatistics[ b[o] ] += 1;
+            } else {
+                letterstatistics[ b[o] ] = 1;
+            }
+        }
+        let werke = abkAW[ kurz ][1];
+        for( let k in werke ){
+            let c = k.split( "" );
+            let C = werke[ k ].split( "" );
+            for( let o in c ){
+                coulet += 1;
+                if( letterstatistics[ c[o] ] ){
+                    letterstatistics[ c[o] ] += 1;
+                } else {
+                    letterstatistics[ c[o] ] = 1;
+                }
+            }
+            for( let o in C ){
+                coulet += 1;
+                if( letterstatistics[ C[o] ] ){
+                    letterstatistics[ C[o] ] += 1;
+                } else {
+                    letterstatistics[ C[o] ] = 1;
+                }
+            }
+        }
+    }
+    for(let k in letterstatistics){
+        letterstatistics[k] = letterstatistics[k]/coulet;
+    }
+    //console.log(letterstatistics);
+}
 
 
 
 /*------------------------------------------------------------------------------
 
-LETTER- and LETTER-GROUP-LEVEL
+LETTER- and LETTER-GROUP-LEVEL / ANY GROUPING
 
 ------------------------------------------------------------------------------*/
 //NOTE NO SECURE CODE, NO ERROR HANDLING - SPEED
@@ -6491,7 +6565,7 @@ function ngramWhole( A, n ){ //string input, but for more than a word
     } //add else
 }
 
-function ngramWords( B, n, padding ){
+function ngramWords( B, n, padding ){ // ARRAY INPUT
     //check B instance of array
     let kuku = [];
     for( let t in B ){
@@ -6500,8 +6574,8 @@ function ngramWords( B, n, padding ){
     return kuku;
 }
 
-function genngram( C, n ){
-    //general ngrtam build
+function genngram( C, n ){ // STRING INPUT
+    //general ngram build
     return ngram( C, n, false );
 }
 
@@ -6526,26 +6600,15 @@ function ngram( A, n, padding ){ //string input
     return vecA;
 }
 
-//suffix trees
-function buildTree(){
-    console.log("Build Tree Trigram");
-    treeGram = {};
-
-    for( let lang in inverseabkAWWAkba ){
-        let vecTris = ngram( lang, 3, False );
-        let kurz = inverseabkAWWAkba[ lang ];
-        for( let v = 0; v < len( vecTris )-1; v+=1 ){
-            if( treeGram[ vecTris[v] ] ){
-                if( treeGram[ vecTris[v] ][0].indexOf( kurz ) == -1 ){
-                    treeGram[ vecTris[v] ][0].push(kurz);
-                }
-            } else {
-                treeGram[ vecTris[v] ] = [ [kurz], { } ];
-            }
-        }
-    }   
-    console.log("End Tree Tri");
+function skipgram( AT, n ){ //INPUT ARRAY of TROKEN, n is GAP size
+    let vecRT = [];
+    const lele = AT.length-n-1;
+    for(let i = 0; i < lele; i++){
+        vecRT.push( AT[i]+" "+AT[i+n+1] );
+    }
+    return vecRT; // RETURN GROUPS OF TOKEN AS NEW TOKEN
 }
+
 
 //SILBEN
 function einzeilzeichenzuLauteinheiten( dieeinzelzeichen, diphtong, 
@@ -7144,6 +7207,10 @@ function justGROSZ( A ){//array input
     return toret;
 }
 
+function erasegram( A, n,f ){ //ARRAY input, f justGRSZ or justKLEIN
+    return skipgram( f(A), n );
+} 
+
 /*------------------------------------------------------------------------------
 
 nFIX-LEVEL
@@ -7475,6 +7542,7 @@ function schaneigh( simplekonkordanz, aDaaA ){
                             neighbournoonelovesyou[ cleanedword ][0][nachba[n]] = 1
                         }
                     }
+                    neighbournoonelovesyou[ cleanedword ][1] += 1;
                 } else {
                     let nana = {};
                     for( let n in nachba ){
@@ -7501,6 +7569,22 @@ function fnb( texttt ){
     
     let konundbigi = simplekon( aDaaA );
     return schaneigh( konundbigi[0], aDaaA );
+}
+
+function fnbnonorm( texttt ){
+    aDaaA = texttt.split(" ");
+    for( let w = 0; w < len( aDaaA ); w += 1 ){
+        if( isupper( aDaaA[ w ] )){
+            aDaaA[ w ] = capitali( aDaaA[ w ] )
+        }
+    }
+    
+    let konundbigi = simplekon( aDaaA );
+    return schaneigh( konundbigi[0], aDaaA );
+}
+
+function pseudosyntagma(){
+
 }
 
 /*------------------------------------------------------------------------------
@@ -7536,6 +7620,9 @@ function zerl(){
     Strout += "<b>2 gram der Wörter padding:</b><br>";
     Strout += ngramWords( aswords, 2, True ).join("/ ")+"<br><br>";
 
+    Strout += "<b>Skipgram (Lücke 2) der Wörter:</b><br>";
+    Strout += skipgram( aswords, 2 ).join("/ ")+"<br><br>";
+
     Strout += "<b>Pseudosilben:</b><br>";
     Strout += silben( stristrstrung.normalize( analysisNormalform ) ).join("/ ")+"<br><br>";
 
@@ -7551,20 +7638,15 @@ function zerl(){
     
     Strout += "<b>Große Wörter:</b><br>";
     Strout += justGROSZ( wlist ).join("/ ")+"<br><br>";
+
+    Strout += "<b>Erase-Gram (kleine):</b><br>";
+    Strout += erasegram( wlist, 1, justKLEIN ).join("/ ")+"<br><br>";
+
+    Strout += "<b>Erase-Gram (große):</b><br>";
+    Strout += erasegram( wlist, 1, justGROSZ ).join("/ ")+"<br><br>";
     
     Strout += "<b>Kopf-Körper-Coda I:</b><br>";
     Strout += toKKC( aswords ).join("/ ")+"<br><br>";
-
-    Strout += "<b>Partitionen (Kopf-Körper-Coda II):</b><br>";
-    let tempstr = "";
-    let perwordpartionined = toKKCnSufixWords( aswords );
-    for( let w in perwordpartionined ){
-        for(let b in perwordpartionined[w] ){
-            tempstr += "Ko: " + perwordpartionined[w][b][0] +" Koe: "+ perwordpartionined[w][b][1] +" Co: " +perwordpartionined[w][b][2]+" <br> ";
-        }
-        tempstr += " <br><br> ";
-    }
-    Strout += tempstr+"<br><br>";
 
     Strout += "<b>als flache Nachbarschaft:</b><br>";
     let stringtobeout = "";
@@ -7577,6 +7659,19 @@ function zerl(){
         }
         stringtobeout = stringtobeout + vv +": ["+gutgemacht[vv][1].toString()+", ["+strighgsjhsj+"]]<br>";
     }
+
+    Strout += "<b>Partitionen (Kopf-Körper-Coda II):</b><br>";
+    let tempstr = "";
+    let perwordpartionined = toKKCnSufixWords( aswords );
+    for( let w in perwordpartionined ){
+        for(let b in perwordpartionined[w] ){
+            tempstr += "Ko: " + perwordpartionined[w][b][0] +" Koe: "+ perwordpartionined[w][b][1] +" Co: " +perwordpartionined[w][b][2]+" <br> ";
+        }
+        tempstr += " <br><br> ";
+    }
+    Strout += tempstr+"<br><br>";
+    
+    
     Strout += stringtobeout+"<br><br>";
     
 
@@ -7589,5 +7684,6 @@ function zerl(){
     document.getElementById( "mata").innerHTML = Strout;
     
 }
+
 
 
