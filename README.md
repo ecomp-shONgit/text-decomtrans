@@ -25,6 +25,8 @@ To run minimal python test call on commandline: python3 textdecomp.py
 
 - genngram: general ngram builder
 
+- skipgram: general skip gram builder
+
 - silben: pseudo syllable
 
 - ohneKon: sting without consonant
@@ -35,6 +37,8 @@ To run minimal python test call on commandline: python3 textdecomp.py
 
 - justGROSZ: string with no stopwords
 
+- earasegram: skipgram of justKLEIN or justGROSZ 
+
 - toKKC: every word as head, body, tail, equal separation
 
 - toKKCnSufixWords: every word as a array of head, body, tail possible letter sequences
@@ -42,6 +46,8 @@ To run minimal python test call on commandline: python3 textdecomp.py
 - fnb: shallow neighbourhood representation
 
 - gettransformarray: get a array of a string with letter transformations
+
+- pseudosyntagma: lager tokens from longest possible sequence of words 
 
 # USAGE
 
