@@ -11,7 +11,7 @@ The software is the second of a triad of software, that is needed to perform var
 4. Shallow neighbourhood representation 
 
 # EXAMPLES
-To get a notion of what the software is good for an how to use it visit this page:
+To get a notion of what the software is good for and how to use it visit this page:
 
 http://ecomparatio.net/~khk/NORM-DECOMP-DIST/zerl.html
 
