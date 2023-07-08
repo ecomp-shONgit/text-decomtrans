@@ -6476,12 +6476,14 @@ function normalizearraykeys(){
 //HELPER, GLOBAL
 
 //suffix trees
+let treeGram = {};
+
 function buildTree(nunu){
     console.log("Build Tree Trigram abkAW");
     treeGram = {};
 
     for( let lang in inverseabkAWWAkba ){
-        let vecTris = ngram( lang, nunu, False );
+        let vecTris = ngram( lang.toLowerCase(), nunu, False );
         let kurz = inverseabkAWWAkba[ lang ];
         for( let v = 0; v < len( vecTris )-1; v+=1 ){
             if( treeGram[ vecTris[v] ] ){
@@ -6492,8 +6494,25 @@ function buildTree(nunu){
                 treeGram[ vecTris[v] ] = [ [kurz], { } ];
             }
         }
+        
+        if( abkAW[kurz][2][2] != "" ){
+            
+            vecTris = ngram( abkAW[kurz][2][2].toLowerCase(), nunu, False );
+
+            
+            for( let v = 0; v < len( vecTris )-1; v+=1 ){
+                if( treeGram[ vecTris[v] ] ){
+                    if( treeGram[ vecTris[v] ][0].indexOf( kurz ) == -1 ){
+                        treeGram[ vecTris[v] ][0].push(kurz);
+                    }
+                } else {
+                    treeGram[ vecTris[v] ] = [ [kurz], { } ];
+                }
+            }
+        }
     }   
-    console.log("End Tree Tri");
+    //console.log(treeGram)
+    console.log("End Tree Tri", treeGram.length);
 }
 
 //Letter statistics of ABKAW
@@ -6582,7 +6601,7 @@ function genngram( C, n ){ // STRING INPUT
 function ngram( A, n, padding ){ //string input
     //bad
     if( n >= A.length  ){
-        return A; //hellbadness 
+        return [A]; //hellbadness 
     }
 
     if( padding ){
@@ -6600,15 +6619,23 @@ function ngram( A, n, padding ){ //string input
     return vecA;
 }
 
-function skipgram( AT, n ){ //INPUT ARRAY of TROKEN, n is GAP size
+function gapgram( AT, m, n ){ //INPUT ARRAY of TROKEN, m is GAP size, n is gram size
     let vecRT = [];
-    const lele = AT.length-n-1;
-    for(let i = 0; i < lele; i++){
-        vecRT.push( AT[i]+" "+AT[i+n+1] );
+    const lele = AT.length-(m*n)-1;
+    for(let i = 0; i < lele; i++){//add for to mut with n to get real gram not only two gram
+        let zwisch = [];
+        for( let j = 0; j < n; j += 1 ){
+            zwisch.push( AT[i+(m*j)] );
+        }
+        vecRT.push( zwisch.join( " ") );
     }
     return vecRT; // RETURN GROUPS OF TOKEN AS NEW TOKEN
 }
 
+//erasegram
+function erasegram( A, m, n, f ){ //ARRAY input, f justGRSZ or justKLEIN
+    return gapgram( f(A), m, n );
+} 
 
 //SILBEN
 function einzeilzeichenzuLauteinheiten( dieeinzelzeichen, diphtong, 
@@ -7207,9 +7234,7 @@ function justGROSZ( A ){//array input
     return toret;
 }
 
-function erasegram( A, n,f ){ //ARRAY input, f justGRSZ or justKLEIN
-    return skipgram( f(A), n );
-} 
+
 
 /*------------------------------------------------------------------------------
 
@@ -7218,7 +7243,7 @@ nFIX-LEVEL
 ------------------------------------------------------------------------------*/
 
 //kopf körper coda teilung / möglichst ebenmäßige disjunkte dreiteilung - coda variabler länge 3,4,5
-function toKKC( A ){ //array input
+function toKKC( A ){ //array input of wordforms
     let toret = [];  
     const lenA = len( A );  
     for( let a = 0; a < lenA; a+=1 ){
@@ -7620,8 +7645,8 @@ function zerl(){
     Strout += "<b>2 gram der Wörter padding:</b><br>";
     Strout += ngramWords( aswords, 2, True ).join("/ ")+"<br><br>";
 
-    Strout += "<b>Skipgram (Lücke 2) der Wörter:</b><br>";
-    Strout += skipgram( aswords, 2 ).join("/ ")+"<br><br>";
+    Strout += "<b>gapgram (Lücke 2) der Wörter:</b><br>";
+    Strout += gapgram( aswords, 2, 2 ).join("/ ")+"<br><br>";
 
     Strout += "<b>Pseudosilben:</b><br>";
     Strout += silben( stristrstrung.normalize( analysisNormalform ) ).join("/ ")+"<br><br>";
@@ -7640,10 +7665,10 @@ function zerl(){
     Strout += justGROSZ( wlist ).join("/ ")+"<br><br>";
 
     Strout += "<b>Erase-Gram (kleine):</b><br>";
-    Strout += erasegram( wlist, 1, justKLEIN ).join("/ ")+"<br><br>";
+    Strout += erasegram( wlist, 1, 2, justKLEIN ).join("/ ")+"<br><br>";
 
     Strout += "<b>Erase-Gram (große):</b><br>";
-    Strout += erasegram( wlist, 1, justGROSZ ).join("/ ")+"<br><br>";
+    Strout += erasegram( wlist, 1, 2, justGROSZ ).join("/ ")+"<br><br>";
     
     Strout += "<b>Kopf-Körper-Coda I:</b><br>";
     Strout += toKKC( aswords ).join("/ ")+"<br><br>";
