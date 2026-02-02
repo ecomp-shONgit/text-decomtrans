@@ -6578,27 +6578,31 @@ LETTER- and LETTER-GROUP-LEVEL / ANY GROUPING
 //NOTE NO SECURE CODE, NO ERROR HANDLING - SPEED
 
 
-function ngramWhole( A, n ){ //string input, but for more than a word
-    if( A.indexOf( " " ) !== -1 ){ //containe spaces
-        return ngram( A, n, 0 );
+function ngramWhole( A, n, s ){ //string input, but for more than a word
+    if( A.indexOf( " " ) !== -1 ){ //containe spaces - is this needed???
+        return ngram( A, n, s, 0 );
     } //add else
 }
 
-function ngramWords( B, n, padding ){ // ARRAY INPUT
+function ngramWords( B, n, s, padding ){ // ARRAY INPUT
     //check B instance of array
     let kuku = [];
     for( let t in B ){
-        kuku.push( ngram( B[t], n, padding ) );
+        const temp = ngram( B[t], n, s, padding );
+        for( let g in temp ){ //goo idea
+            kuku.push( temp[ g ] );
+        }
     }
     return kuku;
 }
 
-function genngram( C, n ){ // STRING INPUT
+function genngram( C, n, s ){ // STRING INPUT, jes but will work for array alike
     //general ngram build
-    return ngram( C, n, false );
+    return ngram( C, n, s, false );
 }
 
-function ngram( A, n, padding ){ //string input
+
+function ngram( A, n, s, padding ){ //string input, s step size 1 or eq n
     //bad
     if( n >= A.length  ){
         return [A]; //hellbadness 
@@ -6613,7 +6617,7 @@ function ngram( A, n, padding ){ //string input
     //build the gam
     let vecA = [];
     const lele = A.length-n+1;
-    for(let i = 0; i < lele; i++){
+    for( let i = 0; i < lele; i+=s ){
         vecA.push( A.slice(i,i+n) );
     }
     return vecA;
@@ -6622,7 +6626,7 @@ function ngram( A, n, padding ){ //string input
 function gapgram( AT, m, n ){ //INPUT ARRAY of TROKEN, m is GAP size, n is gram size
     let vecRT = [];
     const lele = AT.length-(m*n)-1;
-    for(let i = 0; i < lele; i++){//add for to mut with n to get real gram not only two gram
+    for(let i = 0; i < lele; i++){
         let zwisch = [];
         for( let j = 0; j < n; j += 1 ){
             zwisch.push( AT[i+(m*j)] );
@@ -6779,11 +6783,10 @@ function trennSGRInurarray( diewoerter ){
 			silben.push( letzteeinheit );
 		}
 		//console.log(lautliches.toString(), silben.toString());
-		ergtext = ergtext + silben.join("") + "  ";
+		ergtext = ergtext + silben.join("") + "  "; 
 	}
 	//
 	return ergtext;
-	
 }
 function trennSARA(){ //Arabisch ?
 
@@ -6800,9 +6803,9 @@ function trennSLAT( A ){
     let diewoerter = [];
     if( A === undefined ){
 	    textelem = document.getElementById( "inputtext"); //holt das html Element in das der Text eingegeben wird
-	    diewoerter = GRvorbereitungT( textelem.value.split("u").join("v") ); //holt den Text und spaltet ihn an den Leerzei., nennt das worte
+	    diewoerter = GRvorbereitungT( textelem.value.split("v").join("u") ); //holt den Text und spaltet ihn an den Leerzei., nennt das worte
 	} else {
-        diewoerter = GRvorbereitungT( A.split("u").join("v") );
+        diewoerter = GRvorbereitungT( A.split("v").join("u") );
     }
 	let ergtext = ""; //darin werden die Ergebnisse der Trennung in Silben gespeichert
 	for( let w in diewoerter ){ // für alles was wort bedeuten soll
@@ -7234,7 +7237,138 @@ function justGROSZ( A ){//array input
     return toret;
 }
 
+/*------------------------------------------------------------------------------
 
+probabilistic algorithems
+
+------------------------------------------------------------------------------*/
+
+//kind of byte pair eincoding, on multibyte unicode signs
+function getinitialvocalsize( dataasarray ){
+    let countboth = {};
+    for( let i = 0; i < len( dataasarray ); i += 1 ){
+        if( countboth[ dataasarray[ i ] ] ){
+            countboth[ dataasarray[ i ] ] += 1;
+        } else {
+            countboth[ dataasarray[ i ] ] = 1;
+        }
+    }
+    return len( countboth );
+}
+
+function tokenstat( dataasarray ){
+    let countboth = {};
+    let maxtoken = "";
+    let maxat = 0;
+    for( let i = 0; i < len( dataasarray )-1; i += 1 ){
+        const both = dataasarray[ i ] + dataasarray[ i+1 ];
+        if( countboth[ both ] ){
+            countboth[ both ] += 1;
+            if( countboth[ both ] > maxat ){
+                maxat = countboth[ both ];
+                maxtoken = both;
+            }
+        } else {
+            countboth[ both ] = 1;
+        }
+    }
+    //console.log(countboth);
+   
+   
+    return [maxtoken, maxat, len(countboth)];
+}
+
+function jointonewtoken( olddata, token ){
+    let newda = [];
+    let i = 0;
+    while( i < len(olddata)-1 ){
+        const joined = olddata[ i ] + olddata[ i+1 ];
+        if( joined == token ){
+            newda.push(joined);
+            i += 2;
+        } else {
+            newda.push( olddata[ i ] )
+            i += 1;
+        }
+         
+    }
+    return newda;
+
+}
+
+function aplBPE2( dataasarray, vocsize ){ //too slow
+    console.log(len( dataasarray ), dataasarray, vocsize)
+    if( vocsize > len( dataasarray ) ){
+        vocsize = Math.floor(len( dataasarray )/2); //??good idea, or not
+    }
+    let newdata = dataasarray;
+    let goonmergin = true;
+    const invocsi = getinitialvocalsize( dataasarray );
+    const actualvocsize = vocsize + invocsi;
+    let oldvocsize = 0;
+    while( goonmergin ){
+        const TCS = tokenstat( newdata ); //array token, count, size of vocab
+        console.log(TCS, actualvocsize, oldvocsize);
+        if( oldvocsize > TCS[2] || TCS[2] >= actualvocsize ){
+            goonmergin = false;
+            continue;
+        }
+        newdata = jointonewtoken( newdata, TCS[ 0 ] );
+        oldvocsize = TCS[2];
+    }
+    return newdata;
+}
+function smallcounttoken(alltoken){
+    let tokenfreq = {};
+    //console.log(alltoken);
+    let lenofall = 0;
+    for( let tok in alltoken ){ //is array
+        let t = alltoken[ tok ];
+        if( t instanceof Array ){
+            t = alltoken[ tok ].join( "" );
+        }   
+        if( t.trim() != "" ){
+            if( tokenfreq[ t ] ){
+                tokenfreq[ t ] += 1;
+            } else {
+                tokenfreq[ t ] = 1;
+            }
+            lenofall += 1;
+        }
+    }
+    return [tokenfreq, lenofall];
+}
+function aplnBPE( dataasarray, vocsize ){ //this is all decompositions of n grams of the array (i.e. one text) and than the merged statistics, it does not tokenize, it is a faster approximation of bpe, handels vocab size differently, its not bytes, but lager code points (i.e. signs) that are grouped, need to sort out token that include smaller token
+    //let allngram = [];
+    let freqlist = [];
+    for( let i = 2; i < 20; i += 1 ){
+        const g = ngram( dataasarray, i, 1, false );
+        //allngram.push( g );
+        let statoftokentype = smallcounttoken( g );
+        //console.log(statoftokentype);
+        let tlist = Object.keys( statoftokentype[0] ).map( function( k ) {
+            return [ k, statoftokentype[0][ k ] ];
+        });
+        let wasinnot = true;
+        for(let l = 0; l < tlist.length; l += 1){
+            if(tlist[l][1] > 1){ //skip the one time token
+                tlist[l][1] = tlist[l][1] / statoftokentype[1];
+                freqlist.push( tlist[l] );
+                wasinnot = false;
+            }
+        }
+        if(wasinnot){
+            break;
+        }
+    }
+    freqlist.sort((a, b) => b[1] - a[1]);
+    //console.log()
+    const retval = freqlist.slice( 0, vocsize );
+    //console.log(retval);
+    return retval;
+}
+//let daspli = "Current large scale LMs include pre-processing steps such as lowercasing, tokenization, and out-of-vocabulary tokens which restrict the space of model-able strings. While processing Unicode strings as a sequence of UTF-8 bytes elegantly fulfills this requirement […], current byte-level LMs are not competitive with word-level LMs on large scale datasets […]. Byte Pair Encoding (BPE) […] is a practical middle ground between character and word level language modeling which effectively interpolates between word level inputs for frequent symbol sequences and character level inputs for infrequent symbol sequences. Despite its name, reference BPE implementations often operate on Unicode code points and not byte sequences. […] In contrast, a byte-level version of BPE only requires a base vocabulary of size 256. […] The vocabulary is expanded to 50,257. We also increase the context size from 512 to 1024 tokens […] Language Models are Unsupervised Multitask Learners Don’t worry if you don’t understand this paragraph. We’ll learn what the above means as we go deeper. Regardless, a couple of key takeaways stand out to me here: BPE operates on the UTF-8 byte representation of Unicode strings. BPE starts from a base vocabulary of only 256 tokens and (in the GPT2 case) expands it to more than 50k (how?). The context size of the Transformer doubles from 512 to 1024 (is this somehow related to a richer vocabulary?). Before answering these questions and understanding what this whole Unicode, BPE, UTF-8 madness is all about, let’s take another step back and motivate why we need to care about the tokenizer in the first place. Splitting text into single characters as we did for Shakespeare kinda worked all right. Is it worth bothering? Andrej answers by providing the following list of problems most of us (LLM users) have stumbled upon at some point. The root cause of all of them is tokenization. Better figure out how that works then.";
+//console.log( "BPE: ", aplBPE( daspli.split(""), 500) );
 
 /*------------------------------------------------------------------------------
 
