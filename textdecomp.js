@@ -6625,11 +6625,11 @@ function ngram( A, n, s, padding ){ //string input, s step size 1 or eq n
 
 function gapgram( AT, m, n ){ //INPUT ARRAY of TROKEN, m is GAP size, n is gram size
     let vecRT = [];
-    const lele = AT.length-(m*n)-1;
+    const lele = AT.length-(m*n);
     for(let i = 0; i < lele; i++){
         let zwisch = [];
         for( let j = 0; j < n; j += 1 ){
-            zwisch.push( AT[i+(m*j)] );
+            zwisch.push( AT[i+(((m+1)*j))] );
         }
         vecRT.push( zwisch.join( " ") );
     }
